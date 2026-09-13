@@ -1,0 +1,1706 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CyberCampus — Catch the Hacker, Pass the Week</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="CyberCampus is a cybersecurity investigation game. Find the campus attacker without wrecking your semester or accusing an innocent person.">
+<meta property="og:title" content="CyberCampus">
+<meta property="og:description" content="A cybersecurity investigation game: find the campus attacker without wrecking your semester.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛰️</text></svg>">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+html{color-scheme:dark} img{max-width:100%} [hidden]{display:none!important}
+/* ══════════ CYBERCAMPUS · single-theme committed dark (campus at 2 AM) ══════════ */
+:root{
+  --bg:#070B14;
+  --bg2:#0A1020;
+  --panel:#0F1526;
+  --panel2:#131B30;
+  --edge:#22304F;
+  --edge-soft:#182238;
+  --ink:#E9EEF9;
+  --dim:#8B95AE;
+  --faint:#5A6480;
+  --cyan:#57E6FF;
+  --cyan-dim:#2C8FA6;
+  --magenta:#FF5C8A;
+  --good:#8FE388;
+  --warn:#FFC24B;
+  --crit:#FF4D5E;
+  --font-d:'Unbounded',system-ui,sans-serif;
+  --font-b:'Sora',system-ui,sans-serif;
+  --font-m:'JetBrains Mono',ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:var(--font-b);font-size:16px;line-height:1.6;
+  overflow-x:clip;
+}
+.mono{font-family:var(--font-m)}
+.dim{color:var(--dim)}
+.small{font-size:.85rem}
+a{color:var(--cyan);text-decoration:none}
+h1,h2,h3{font-family:var(--font-d);line-height:1.12;text-wrap:balance;margin:0}
+button{font-family:inherit}
+
+/* scanline atmosphere */
+.scanlines{position:fixed;inset:0;pointer-events:none;z-index:90;opacity:.5;
+  background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(7,10,18,.22) 3px 4px);}
+@media (prefers-reduced-motion:no-preference){
+  .scanlines::after{content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg,transparent,rgba(87,230,255,.028),transparent);
+    animation:sweep 9s linear infinite}
+  @keyframes sweep{from{transform:translateY(-100%)}to{transform:translateY(100%)}}
+}
+
+/* ══════════ TOPBAR ══════════ */
+.topbar{
+  position:sticky;top:0;z-index:80;display:flex;align-items:center;gap:1.2rem;
+  padding:.65rem 1.4rem;background:rgba(7,11,20,.82);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--edge-soft);flex-wrap:wrap;
+}
+.brand{display:flex;align-items:center;gap:.55rem;color:var(--ink)}
+.brand-glyph{color:var(--cyan);font-size:1.2rem}
+.brand-name{font-family:var(--font-d);font-weight:800;font-size:.95rem;letter-spacing:.06em}
+.brand-name em{font-style:normal;color:var(--cyan)}
+.mainnav{display:flex;gap:.2rem;flex-wrap:wrap}
+.mainnav a{
+  color:var(--dim);font-size:.8rem;font-weight:600;letter-spacing:.04em;
+  padding:.4rem .65rem;border-radius:4px;transition:color .18s,background .18s;
+}
+.mainnav a:hover{color:var(--ink);background:var(--edge-soft)}
+.mainnav a.active{color:var(--cyan);background:rgba(87,230,255,.08)}
+.mainnav a.gated.locked{opacity:.35;pointer-events:none}
+.navburger{display:none;background:none;border:1px solid var(--edge);border-radius:6px;
+  padding:.5rem .55rem;cursor:pointer;margin-left:auto}
+.navburger span{display:block;width:18px;height:2px;background:var(--cyan);margin:3px 0}
+
+/* HUD */
+.hud{display:flex;align-items:center;gap:1rem;margin-left:auto;flex-wrap:wrap}
+.hud-day,.hud-hours{display:flex;flex-direction:column;align-items:center;line-height:1.1}
+.hud-day .mono,.hud-hours .mono{color:var(--cyan);font-weight:700;font-size:.85rem}
+.hud-sub{font-size:.55rem;letter-spacing:.18em;color:var(--faint)}
+.hud-meters{display:flex;gap:.55rem}
+.meter{display:flex;flex-direction:column;gap:2px;width:52px}
+.meter i{font-style:normal;font-family:var(--font-m);font-size:.55rem;letter-spacing:.14em;color:var(--faint)}
+.meter b{display:block;height:5px;background:var(--edge-soft);border-radius:3px;overflow:hidden}
+.meter u{display:block;height:100%;background:var(--cyan);border-radius:3px;transition:width .5s ease,background .3s}
+.meter u.low{background:var(--crit)}
+.meter u.mid{background:var(--warn)}
+
+/* ══════════ BUTTONS ══════════ */
+.btn{
+  border:1px solid var(--edge);background:var(--panel);color:var(--ink);
+  font-weight:600;font-size:.9rem;padding:.65rem 1.15rem;border-radius:6px;cursor:pointer;
+  transition:transform .15s,box-shadow .2s,border-color .2s,background .2s;
+}
+.btn:hover{transform:translateY(-1px);border-color:var(--cyan-dim)}
+.btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.btn-primary{
+  background:linear-gradient(120deg,rgba(87,230,255,.16),rgba(87,230,255,.05));
+  border-color:var(--cyan-dim);color:var(--cyan);
+}
+.btn-primary:hover{box-shadow:0 0 24px rgba(87,230,255,.25);border-color:var(--cyan)}
+.btn-big{font-size:1.05rem;padding:.95rem 1.8rem;font-family:var(--font-d);font-weight:600;letter-spacing:.03em}
+.btn-ghost{background:transparent;color:var(--dim)}
+.btn-danger{border-color:#7A2634;color:var(--crit);background:rgba(255,77,94,.06)}
+.btn-danger:hover{border-color:var(--crit);box-shadow:0 0 20px rgba(255,77,94,.2)}
+.btn[disabled]{opacity:.35;pointer-events:none}
+
+/* ══════════ VIEWS ══════════ */
+.view{min-height:60vh}
+.game-view,.view#view-problem{max-width:1180px;margin:0 auto;padding:2.2rem 1.4rem 4rem}
+.view-head{margin-bottom:1.6rem}
+.view-head h2{font-size:clamp(1.4rem,3vw,2.1rem);font-weight:600}
+.sec-eyebrow{color:var(--cyan);font-size:.72rem;letter-spacing:.22em;margin:0 0 .5rem}
+.map-cost{font-size:.8rem;color:var(--faint);font-weight:400}
+
+.panel{
+  background:linear-gradient(160deg,var(--panel),var(--bg2));
+  border:1px solid var(--edge-soft);border-radius:10px;padding:1.1rem 1.3rem;margin-top:1.4rem;
+}
+.panel-label{color:var(--faint);font-size:.65rem;letter-spacing:.2em;margin:0 0 .6rem}
+
+/* ══════════ HERO ══════════ */
+.hero{
+  position:relative;padding:clamp(4rem,10vh,7rem) 1.4rem 3.6rem;text-align:left;
+  max-width:1180px;margin:0 auto;
+}
+.hero-grid{
+  position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background:
+    linear-gradient(rgba(87,230,255,.05) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(87,230,255,.05) 1px,transparent 1px);
+  background-size:56px 56px;
+  mask-image:radial-gradient(ellipse 90% 80% at 40% 30%,#000 30%,transparent 75%);
+  -webkit-mask-image:radial-gradient(ellipse 90% 80% at 40% 30%,#000 30%,transparent 75%);
+}
+.hero-eyebrow{color:var(--magenta);font-size:.78rem;letter-spacing:.2em;margin:0 0 1.4rem}
+.hero-title{
+  font-size:clamp(2.1rem,6.4vw,4.6rem);font-weight:800;letter-spacing:.01em;
+  margin-bottom:1.6rem;position:relative;
+}
+.glitch{position:relative;color:var(--cyan);display:inline-block}
+@media (prefers-reduced-motion:no-preference){
+  .glitch::before,.glitch::after{
+    content:attr(data-text);position:absolute;inset:0;overflow:hidden;
+  }
+  .glitch::before{color:var(--magenta);clip-path:inset(20% 0 40% 0);animation:gl1 3.1s steps(2) infinite}
+  .glitch::after{color:#fff;clip-path:inset(60% 0 12% 0);animation:gl2 2.7s steps(2) infinite}
+  @keyframes gl1{0%,92%,100%{transform:none;opacity:0}93%{transform:translate(-4px,2px);opacity:.85}96%{transform:translate(3px,-1px);opacity:.6}}
+  @keyframes gl2{0%,88%,100%{transform:none;opacity:0}89%{transform:translate(4px,1px);opacity:.7}94%{transform:translate(-3px,-2px);opacity:.5}}
+}
+.hero-lede{max-width:58ch;color:var(--dim);font-size:1.05rem;margin:0 0 2rem}
+.hero-cta{display:flex;gap:1rem;flex-wrap:wrap;align-items:center}
+.hero-ticker{
+  margin-top:4rem;border-block:1px solid var(--edge-soft);padding:.55rem 0;
+  overflow:hidden;white-space:nowrap;color:var(--faint);font-size:.72rem;letter-spacing:.08em;
+}
+@media (prefers-reduced-motion:no-preference){
+  .hero-ticker span{display:inline-block;animation:tick 42s linear infinite}
+  @keyframes tick{to{transform:translateX(-50%)}}
+}
+
+/* ══════════ LANDING SECTIONS ══════════ */
+.land-section{max-width:1180px;margin:0 auto;padding:5rem 1.4rem}
+.sec-title{font-size:clamp(1.5rem,3.6vw,2.6rem);font-weight:600;margin-bottom:1rem}
+.sec-lede{max-width:62ch;color:var(--dim)}
+
+.story-panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1rem;margin-top:2.2rem}
+.story-panel{
+  background:var(--panel);border:1px solid var(--edge-soft);border-radius:10px;
+  padding:1.2rem 1.25rem;display:flex;flex-direction:column;gap:.7rem;
+}
+.story-panel p{margin:0;color:var(--ink)}
+.story-panel.accent{border-color:var(--cyan-dim);background:linear-gradient(160deg,rgba(87,230,255,.09),var(--panel))}
+.panel-tag{font-size:.62rem;letter-spacing:.16em;color:var(--magenta)}
+.story-panel.accent .panel-tag{color:var(--cyan)}
+
+.loop-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-top:2.2rem}
+.loop-card{background:var(--panel);border:1px solid var(--edge-soft);border-radius:10px;padding:1.2rem 1.25rem}
+.loop-card h3{font-size:.95rem;font-weight:600;margin:.6rem 0 .4rem}
+.loop-card p{margin:0;color:var(--dim);font-size:.88rem}
+.loop-num{color:var(--cyan);font-size:1.3rem;font-weight:700}
+.loop-card.warn{border-color:#5c3b1e}
+.loop-card.warn .loop-num{color:var(--warn)}
+
+.suspect-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1rem;margin-top:2.2rem}
+.sus-mini{
+  background:var(--panel);border:1px solid var(--edge-soft);border-radius:10px;padding:1.1rem;
+  transition:transform .2s,border-color .2s;
+}
+.sus-mini:hover{transform:translateY(-4px);border-color:var(--cyan-dim)}
+.sus-mini .avatar{margin-bottom:.7rem}
+.sus-mini h3{font-size:1rem}
+.sus-mini .role{color:var(--cyan);font-size:.68rem;letter-spacing:.12em}
+.sus-mini p{color:var(--dim);font-size:.82rem;margin:.5rem 0 0}
+
+.avatar{
+  width:52px;height:52px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-d);font-weight:800;font-size:1.15rem;color:var(--bg);
+  background:var(--cyan);flex:none;
+}
+.avatar.a-ayaan{background:#57E6FF}.avatar.a-sara{background:#FF5C8A}
+.avatar.a-omar{background:#FFC24B}.avatar.a-maya{background:#8FE388}.avatar.a-zain{background:#B48CFF}
+
+.trust-split{display:grid;grid-template-columns:1.1fr .9fr;gap:3rem;align-items:center}
+.trust-list{color:var(--dim);display:flex;flex-direction:column;gap:.6rem;padding-left:1.2rem;margin-top:1.4rem}
+.trust-list b{color:var(--ink)}
+.clue-demo{background:var(--panel);border:1px solid var(--edge);border-radius:10px;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.clue-demo-head{background:var(--panel2);padding:.6rem 1rem;font-size:.66rem;letter-spacing:.12em;color:var(--cyan);border-bottom:1px solid var(--edge-soft)}
+.clue-demo-body{padding:1rem 1rem .4rem;margin:0;font-size:.92rem}
+.clue-demo-row{display:flex;gap:.8rem;padding:.55rem 1rem;align-items:baseline}
+.clue-demo-row span{font-family:var(--font-m);font-size:.6rem;letter-spacing:.14em;flex:none;width:110px}
+.clue-demo-row p{margin:0;font-size:.85rem;color:var(--dim)}
+.clue-demo-row.proves span{color:var(--good)}
+.clue-demo-row.notproves span{color:var(--crit)}
+.clue-demo-row.notproves{border-top:1px dashed var(--edge-soft)}
+
+.land-final{text-align:center;padding-bottom:7rem}
+.land-final .sec-title{margin-bottom:2rem}
+.site-footer{border-top:1px solid var(--edge-soft);padding:1.6rem 1.4rem;text-align:center}
+.site-footer .mono{color:var(--faint);font-size:.68rem;letter-spacing:.1em}
+
+/* ══════════ CALENDAR ══════════ */
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:.6rem}
+.cal-day{
+  background:var(--panel);border:1px solid var(--edge-soft);border-radius:8px;padding:.7rem .7rem .9rem;
+  min-height:150px;display:flex;flex-direction:column;gap:.45rem;position:relative;
+}
+.cal-day.today{border-color:var(--cyan);box-shadow:0 0 18px rgba(87,230,255,.12)}
+.cal-day.past{opacity:.45}
+.cal-day .cd-name{font-family:var(--font-m);font-size:.62rem;letter-spacing:.16em;color:var(--faint)}
+.cal-day.today .cd-name{color:var(--cyan)}
+.cal-item{font-size:.68rem;line-height:1.35;padding:.25rem .4rem;border-radius:4px;background:var(--edge-soft);color:var(--dim)}
+.cal-item.exam{background:rgba(255,77,94,.14);color:var(--crit)}
+.cal-item.due{background:rgba(255,194,75,.12);color:var(--warn)}
+.cal-item.social{background:rgba(143,227,136,.1);color:var(--good)}
+.cal-item.incident{background:rgba(255,92,138,.12);color:var(--magenta)}
+
+/* ══════════ BOARD ══════════ */
+.board-head{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;flex-wrap:wrap}
+.board-legend{display:flex;gap:1rem;font-size:.62rem;letter-spacing:.1em;flex-wrap:wrap}
+.lg{display:inline-flex;align-items:center;gap:.35rem;color:var(--dim)}
+.lg::before{content:"";width:9px;height:9px;border-radius:2px}
+.lg.conf::before{background:var(--good)}
+.lg.poss::before{background:var(--warn)}
+.lg.unpr::before{background:var(--faint)}
+.lg.hint{color:var(--faint)}
+.lg.hint::before{display:none}
+
+.confidence-bar{display:flex;align-items:center;gap:.9rem;margin:1rem 0;flex-wrap:wrap}
+.confidence-bar>.mono{font-size:.62rem;letter-spacing:.18em;color:var(--faint)}
+.cbar{flex:1;min-width:140px;height:8px;background:var(--edge-soft);border-radius:4px;overflow:hidden}
+.cbar-fill{height:100%;width:0;background:linear-gradient(90deg,var(--cyan-dim),var(--cyan));transition:width .6s ease}
+.conf-note{font-size:.75rem;color:var(--dim)}
+
+.boardwrap{
+  position:relative;border:1px solid var(--edge);border-radius:12px;overflow:hidden;
+  background:
+    radial-gradient(circle at 20% 10%,rgba(87,230,255,.05),transparent 45%),
+    radial-gradient(circle at 85% 90%,rgba(255,92,138,.05),transparent 45%),
+    var(--bg2);
+  height:640px;
+}
+.board{position:absolute;inset:0}
+.board-links{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.board-links line{stroke:var(--magenta);stroke-width:1.5;stroke-dasharray:5 4;opacity:.75}
+
+.clue-card{
+  position:absolute;width:215px;background:var(--panel);border:1px solid var(--edge);
+  border-radius:8px;padding:.6rem .7rem .7rem;cursor:grab;user-select:none;
+  box-shadow:0 10px 30px rgba(0,0,0,.45);touch-action:none;
+}
+.clue-card:active{cursor:grabbing}
+.clue-card.selected{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan),0 10px 30px rgba(0,0,0,.5)}
+.clue-card .cc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem}
+.clue-card .cc-id{font-family:var(--font-m);font-size:.6rem;color:var(--cyan);letter-spacing:.1em}
+.clue-card .cc-rel{font-family:var(--font-m);font-size:.55rem;letter-spacing:.1em;padding:.1rem .35rem;border-radius:3px}
+.cc-rel.High{background:rgba(143,227,136,.13);color:var(--good)}
+.cc-rel.Medium{background:rgba(255,194,75,.13);color:var(--warn)}
+.cc-rel.Low{background:rgba(255,77,94,.13);color:var(--crit)}
+.clue-card h4{margin:0 0 .3rem;font-family:var(--font-b);font-size:.8rem;font-weight:600;line-height:1.35}
+.clue-card .cc-src{font-size:.62rem;color:var(--faint);font-family:var(--font-m)}
+.clue-card .cc-status{
+  margin-top:.5rem;font-family:var(--font-m);font-size:.56rem;letter-spacing:.14em;
+  padding:.18rem .4rem;border-radius:3px;display:inline-block;cursor:pointer;border:1px solid transparent;
+}
+.cc-status.unproven{background:var(--edge-soft);color:var(--dim)}
+.cc-status.possible{background:rgba(255,194,75,.12);color:var(--warn)}
+.cc-status.confirmed{background:rgba(143,227,136,.12);color:var(--good)}
+.clue-card .cc-info{float:right;font-size:.62rem;color:var(--faint);cursor:pointer;margin-top:.55rem}
+.clue-card .cc-info:hover{color:var(--cyan)}
+
+.sus-node{
+  position:absolute;width:150px;text-align:center;background:var(--panel2);
+  border:1px solid var(--edge);border-radius:10px;padding:.7rem .5rem;cursor:pointer;
+  transition:border-color .2s;
+}
+.sus-node:hover{border-color:var(--magenta)}
+.sus-node .avatar{width:40px;height:40px;margin:0 auto .4rem;font-size:.9rem}
+.sus-node h4{margin:0;font-family:var(--font-b);font-size:.78rem;font-weight:600}
+.sus-node .role{font-size:.58rem;color:var(--faint);font-family:var(--font-m);letter-spacing:.08em}
+.sus-node .linked-count{font-family:var(--font-m);font-size:.58rem;color:var(--magenta);display:block;margin-top:.3rem}
+
+/* ══════════ MAP ══════════ */
+.mapwrap{border:1px solid var(--edge);border-radius:12px;overflow:hidden;background:var(--bg2)}
+#campusMap{display:block;width:100%;height:auto}
+.loc{cursor:pointer}
+.loc rect{fill:var(--panel2);stroke:var(--edge);stroke-width:1.2;transition:.2s}
+.loc:hover rect{stroke:var(--cyan);fill:#16203A}
+.loc.visited rect{stroke:var(--cyan-dim);stroke-dasharray:4 3}
+.loc text{fill:var(--ink);font-family:'Sora',sans-serif;font-size:14px;font-weight:600}
+.loc .loc-sub{fill:var(--faint);font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:400;letter-spacing:.08em}
+.map-path{stroke:var(--edge);stroke-width:1;stroke-dasharray:3 5;fill:none}
+.map-glow{fill:none;stroke:rgba(87,230,255,.14);stroke-width:14;stroke-linecap:round}
+
+/* ══════════ SUSPECT GRID ══════════ */
+.suspect-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.1rem}
+.sus-card{
+  background:linear-gradient(165deg,var(--panel),var(--bg2));border:1px solid var(--edge-soft);
+  border-radius:12px;padding:1.2rem;display:flex;flex-direction:column;gap:.7rem;
+}
+.sus-card .sus-top{display:flex;gap:.9rem;align-items:center}
+.sus-card h3{font-size:1.05rem;font-weight:600}
+.sus-card .role{font-family:var(--font-m);font-size:.62rem;letter-spacing:.12em;color:var(--cyan)}
+.sus-card .motive{color:var(--dim);font-size:.86rem;margin:0}
+.sus-card .motive b{color:var(--ink)}
+.trust-row{display:flex;align-items:center;gap:.6rem}
+.trust-row span{font-family:var(--font-m);font-size:.58rem;letter-spacing:.14em;color:var(--faint)}
+.tbar{flex:1;height:6px;background:var(--edge-soft);border-radius:3px;overflow:hidden}
+.tbar i{display:block;height:100%;background:var(--good);border-radius:3px;transition:width .4s}
+.tbar i.low{background:var(--crit)}
+.tbar i.mid{background:var(--warn)}
+.trust-row b{font-family:var(--font-m);font-size:.68rem;width:2.2rem;text-align:right}
+.sus-actions{display:flex;gap:.6rem;margin-top:.2rem;flex-wrap:wrap}
+.sus-actions .btn{font-size:.78rem;padding:.45rem .8rem}
+.sus-note{font-size:.75rem;color:var(--warn);font-family:var(--font-m)}
+.sus-note.cleared{color:var(--good)}
+
+/* ══════════ ACTIVITIES ══════════ */
+.activity-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
+.act-card{
+  background:var(--panel);border:1px solid var(--edge-soft);border-radius:10px;padding:1.05rem 1.1rem;
+  display:flex;flex-direction:column;gap:.5rem;transition:border-color .2s,transform .15s;
+}
+.act-card:not(.disabled):hover{border-color:var(--cyan-dim);transform:translateY(-2px)}
+.act-card.disabled{opacity:.4}
+.act-card h3{font-size:.92rem;font-weight:600;display:flex;justify-content:space-between;align-items:baseline}
+.act-card h3 .cost{font-family:var(--font-m);font-size:.72rem;color:var(--cyan);font-weight:500}
+.act-card p{margin:0;color:var(--dim);font-size:.82rem;flex:1}
+.act-card .fx{font-family:var(--font-m);font-size:.62rem;color:var(--faint);letter-spacing:.05em}
+.act-card .btn{align-self:flex-start;font-size:.78rem;padding:.45rem .9rem}
+.act-card.endday{border-color:#31406B;background:linear-gradient(165deg,rgba(87,230,255,.06),var(--panel))}
+.act-card.accuse{border-color:#5A2430}
+
+.daylog{max-height:260px;overflow-y:auto}
+.logfeed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.45rem}
+.logfeed li{font-size:.8rem;color:var(--dim);padding-left:1rem;position:relative}
+.logfeed li::before{content:"▸";position:absolute;left:0;color:var(--cyan);font-size:.7rem}
+.logfeed li.bad::before{color:var(--crit)}
+.logfeed li.good::before{color:var(--good)}
+.logfeed li b{color:var(--ink)}
+.logfeed li .mono{font-size:.68rem;color:var(--faint)}
+
+/* ══════════ PROGRESS ══════════ */
+.progress-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem}
+.stat-tile{background:var(--panel);border:1px solid var(--edge-soft);border-radius:10px;padding:1rem 1.1rem}
+.stat-tile .st-label{font-family:var(--font-m);font-size:.6rem;letter-spacing:.18em;color:var(--faint)}
+.stat-tile .st-val{font-family:var(--font-d);font-size:1.7rem;font-weight:600;margin:.2rem 0 .5rem;font-variant-numeric:tabular-nums}
+.stat-tile .tbar{height:7px}
+
+/* ══════════ MODAL ══════════ */
+.modal-veil{
+  position:fixed;inset:0;z-index:100;background:rgba(4,6,12,.78);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;padding:1.2rem;
+}
+.modal{
+  background:linear-gradient(165deg,var(--panel2),var(--bg2));border:1px solid var(--edge);
+  border-radius:14px;max-width:640px;width:100%;max-height:86vh;overflow-y:auto;
+  padding:1.6rem 1.7rem;box-shadow:0 40px 120px rgba(0,0,0,.6);
+  animation:pop .28s cubic-bezier(.2,.9,.3,1.2);
+}
+@keyframes pop{from{transform:scale(.94) translateY(12px);opacity:0}}
+.modal .m-tag{font-family:var(--font-m);font-size:.64rem;letter-spacing:.2em;color:var(--magenta);margin:0 0 .7rem}
+.modal .m-tag.cyan{color:var(--cyan)}
+.modal h3{font-size:1.25rem;font-weight:600;margin-bottom:.8rem}
+.modal p{color:var(--dim);margin:.5rem 0}
+.modal p b,.modal p strong{color:var(--ink)}
+.modal .m-quote{
+  border-left:2px solid var(--magenta);padding:.5rem .9rem;margin:.9rem 0;
+  font-style:italic;color:var(--ink);background:rgba(255,92,138,.05);border-radius:0 6px 6px 0;
+}
+.modal .m-log{
+  font-family:var(--font-m);font-size:.78rem;background:#060910;border:1px solid var(--edge-soft);
+  border-radius:8px;padding:.9rem 1rem;color:var(--good);line-height:1.7;overflow-x:auto;
+}
+.modal .m-choices{display:flex;flex-direction:column;gap:.6rem;margin-top:1.2rem}
+.modal .m-choices .btn{text-align:left;display:flex;justify-content:space-between;gap:1rem;align-items:center}
+.modal .m-choices .btn .mono{font-size:.66rem;color:var(--faint)}
+.modal .clue-detail{margin-top:.8rem}
+.modal .clue-demo-row span{width:120px}
+.modal .ending-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:.6rem;margin-top:1.2rem}
+.modal .ending-stats div{background:var(--panel);border:1px solid var(--edge-soft);border-radius:8px;padding:.6rem;text-align:center}
+.modal .ending-stats .mono{font-size:.58rem;color:var(--faint);letter-spacing:.12em}
+.modal .ending-stats b{font-family:var(--font-d);font-size:1.15rem;display:block}
+.modal.ending-win{border-color:var(--good)}
+.modal.ending-loss{border-color:var(--crit)}
+
+/* ══════════ TOASTS ══════════ */
+.toasts{position:fixed;right:1.2rem;bottom:1.2rem;z-index:120;display:flex;flex-direction:column;gap:.55rem;max-width:330px}
+.toast{
+  background:var(--panel2);border:1px solid var(--edge);border-left:3px solid var(--cyan);
+  border-radius:8px;padding:.7rem .9rem;font-size:.82rem;color:var(--ink);
+  box-shadow:0 14px 40px rgba(0,0,0,.5);animation:tin .3s ease;
+}
+.toast.bad{border-left-color:var(--crit)}
+.toast.good{border-left-color:var(--good)}
+.toast.warn{border-left-color:var(--warn)}
+.toast .mono{display:block;font-size:.6rem;letter-spacing:.15em;color:var(--faint);margin-bottom:.2rem}
+@keyframes tin{from{transform:translateX(30px);opacity:0}}
+
+/* ══════════ PROSE ══════════ */
+.prose{max-width:70ch}
+.prose h3{font-size:1.15rem;font-weight:600;margin:2rem 0 .6rem;color:var(--cyan)}
+.prose p,.prose li{color:var(--dim)}
+.prose ul{padding-left:1.2rem;display:flex;flex-direction:column;gap:.5rem}
+.prose em{color:var(--ink)}
+
+/* ══════════ ANIMATED BACKGROUND ══════════ */
+body{position:relative}
+#bgCanvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.bg-aurora{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.bg-aurora::before,.bg-aurora::after{
+  content:"";position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;
+}
+.bg-aurora::before{
+  width:60vw;height:60vw;left:-10vw;top:-15vw;
+  background:radial-gradient(circle,rgba(87,230,255,.22),transparent 62%);
+  animation:drift1 26s ease-in-out infinite;
+}
+.bg-aurora::after{
+  width:52vw;height:52vw;right:-12vw;bottom:-18vw;
+  background:radial-gradient(circle,rgba(255,92,138,.18),transparent 62%);
+  animation:drift2 32s ease-in-out infinite;
+}
+@keyframes drift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(14vw,10vh) scale(1.15)}}
+@keyframes drift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-12vw,-8vh) scale(1.1)}}
+.topbar{position:sticky;z-index:80}
+#app{position:relative;z-index:1}
+
+/* ══════════ NAV: pre-game vs playing ══════════ */
+.mainnav{display:flex}
+body:not(.playing) .mainnav{display:none!important}
+.topStart{margin-left:auto;display:inline-flex;font-size:.8rem;padding:.5rem 1rem}
+body.playing .topStart{display:none}
+body:not(.playing) .navburger{display:none!important}
+
+/* ══════════ LANDING v2 ══════════ */
+.scroll-cue{color:var(--faint);font-size:.72rem;letter-spacing:.14em;align-self:center;
+  transition:color .2s}
+.scroll-cue:hover{color:var(--cyan)}
+@media (prefers-reduced-motion:no-preference){
+  .scroll-cue{animation:cuepulse 2.4s ease-in-out infinite}
+  @keyframes cuepulse{0%,100%{opacity:.6}50%{opacity:1}}
+}
+.hero-title{max-width:14ch}
+
+.why-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.1rem;margin-top:2.4rem}
+.why-card{
+  background:linear-gradient(165deg,rgba(15,21,38,.82),rgba(10,16,32,.82));
+  border:1px solid var(--edge-soft);border-radius:14px;padding:1.5rem 1.4rem;
+  backdrop-filter:blur(4px);transition:transform .25s,border-color .25s,box-shadow .25s;
+}
+.why-card:hover{transform:translateY(-5px);border-color:var(--cyan-dim);box-shadow:0 18px 50px rgba(0,0,0,.4)}
+.why-ico{font-size:1.7rem;display:block;margin-bottom:.7rem}
+.why-card h3{font-size:1.02rem;font-weight:600;margin-bottom:.5rem}
+.why-card p{margin:0;color:var(--dim);font-size:.9rem}
+.why-card em{color:var(--cyan);font-style:normal}
+
+/* DEMO SCREEN */
+.demo-wrap{display:grid;grid-template-columns:1.6fr 1fr;gap:2rem;align-items:center;margin-top:2.4rem}
+.demo-screen{
+  background:linear-gradient(160deg,#0b1122,#070c18);border:1px solid var(--edge);
+  border-radius:14px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.5);
+}
+.demo-bar{
+  display:flex;align-items:center;gap:.4rem;padding:.55rem .9rem;background:#0a1020;
+  border-bottom:1px solid var(--edge-soft);font-size:.6rem;letter-spacing:.14em;color:var(--cyan-dim);
+}
+.demo-bar .dot{width:9px;height:9px;border-radius:50%;background:var(--edge)}
+.demo-bar .dot:nth-child(1){background:#FF5C6E}.demo-bar .dot:nth-child(2){background:var(--warn)}.demo-bar .dot:nth-child(3){background:var(--good)}
+.demo-stage{position:relative;height:280px;
+  background:radial-gradient(circle at 30% 20%,rgba(87,230,255,.06),transparent 50%),
+             radial-gradient(circle at 80% 80%,rgba(255,92,138,.06),transparent 50%);}
+.demo-links{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.demo-links line{stroke:var(--magenta);stroke-width:1.6;stroke-dasharray:5 4;opacity:0}
+.demo-chip{
+  position:absolute;background:var(--panel);border:1px solid var(--edge);border-radius:7px;
+  padding:.45rem .6rem;width:150px;box-shadow:0 8px 24px rgba(0,0,0,.4);opacity:0;
+}
+.demo-chip .dc-id{font-family:var(--font-m);font-size:.54rem;color:var(--cyan);letter-spacing:.08em}
+.demo-chip .dc-t{font-size:.72rem;font-weight:600;line-height:1.3;margin-top:.15rem}
+.demo-chip .dc-r{font-family:var(--font-m);font-size:.5rem;letter-spacing:.1em;color:var(--good);margin-top:.25rem;display:block}
+.demo-sus{
+  position:absolute;text-align:center;width:112px;background:var(--panel2);
+  border:1px solid var(--edge);border-radius:10px;padding:.55rem .4rem;opacity:0;
+}
+.demo-sus .avatar{width:34px;height:34px;margin:0 auto .3rem;font-size:.8rem}
+.demo-sus h5{margin:0;font-family:var(--font-b);font-size:.72rem;font-weight:600}
+.demo-sus .role{font-family:var(--font-m);font-size:.5rem;color:var(--faint);letter-spacing:.06em}
+.demo-sus.flag{border-color:var(--magenta);box-shadow:0 0 0 1px var(--magenta),0 0 22px rgba(255,92,138,.3)}
+.demo-conf{display:flex;align-items:center;gap:.7rem;padding:.7rem .9rem;border-top:1px solid var(--edge-soft);background:#0a1020}
+.demo-conf .mono{font-size:.56rem;letter-spacing:.16em;color:var(--faint)}
+.demo-cbar{flex:1;height:7px;background:var(--edge-soft);border-radius:4px;overflow:hidden}
+.demo-cbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan-dim),var(--cyan));border-radius:4px}
+.demo-conf b{font-family:var(--font-m);font-size:.72rem;color:var(--cyan);width:2.6rem;text-align:right}
+
+.how-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1.1rem;counter-reset:step}
+.how-steps li{position:relative;padding-left:3rem;counter-increment:step}
+.how-steps li::before{
+  content:counter(step);position:absolute;left:0;top:0;width:2.1rem;height:2.1rem;
+  display:flex;align-items:center;justify-content:center;border-radius:8px;
+  font-family:var(--font-d);font-weight:700;font-size:.9rem;color:var(--cyan);
+  background:rgba(87,230,255,.08);border:1px solid var(--cyan-dim);
+}
+.how-steps b{display:block;font-size:1rem;font-weight:600;margin-bottom:.15rem}
+.how-steps span{color:var(--dim);font-size:.9rem}
+
+.fine{color:var(--faint);font-size:.66rem;letter-spacing:.08em;margin-top:1.4rem}
+
+/* ══════════ RESPONSIVE ══════════ */
+@media (max-width:960px){
+  .trust-split{grid-template-columns:1fr;gap:2rem}
+  .calendar{grid-template-columns:repeat(4,1fr)}
+  .hud-meters{display:none}
+}
+@media (max-width:720px){
+  .mainnav{
+    display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;
+    background:rgba(7,11,20,.97);border-bottom:1px solid var(--edge);padding:.8rem 1.2rem;
+  }
+  .mainnav.open{display:flex}
+  .navburger{display:block}
+  .hud{margin-left:0;width:100%;justify-content:space-between}
+  .calendar{grid-template-columns:repeat(2,1fr)}
+  .boardwrap{height:900px}
+  .clue-card{width:180px}
+  .land-section{padding:3.2rem 1.2rem}
+  .demo-wrap{grid-template-columns:1fr;gap:1.4rem}
+  .hero-cta{flex-direction:column;align-items:flex-start}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  html{scroll-behavior:auto}
+}
+
+</style>
+</head>
+<body>
+<!-- ══════════════ ANIMATED BACKGROUND ══════════════ -->
+<canvas id="bgCanvas" aria-hidden="true"></canvas>
+<div class="bg-aurora" aria-hidden="true"></div>
+<div class="scanlines" aria-hidden="true"></div>
+
+<!-- ══════════════ TOP NAV / HUD ══════════════ -->
+<header class="topbar" id="topbar">
+  <a class="brand" href="#home">
+    <span class="brand-glyph">▙</span>
+    <span class="brand-name">CYBER<em>CAMPUS</em></span>
+  </a>
+  <nav class="mainnav" id="mainnav">
+    <a href="#home" data-view="home">Home</a>
+    <a href="#semester" data-view="semester" class="gated">Semester</a>
+    <a href="#board" data-view="board" class="gated">Board</a>
+    <a href="#map" data-view="map" class="gated">Map</a>
+    <a href="#suspects" data-view="suspects" class="gated">Suspects</a>
+    <a href="#decisions" data-view="decisions" class="gated">Decisions</a>
+    <a href="#progress" data-view="progress" class="gated">Progress</a>
+  </nav>
+  <button class="btn btn-primary topStart" id="topStartBtn">▸ Start Game</button>
+  <button class="navburger" id="navburger" aria-label="Menu"><span></span><span></span><span></span></button>
+  <div class="hud" id="hud" hidden>
+    <div class="hud-day"><span class="mono" id="hudDay">DAY 1</span><span class="hud-sub" id="hudDate">MON</span></div>
+    <div class="hud-hours" title="Hours left today"><span class="mono" id="hudHours">14h</span><span class="hud-sub">LEFT</span></div>
+    <div class="hud-meters">
+      <div class="meter" title="Academics"><i>ACA</i><b><u id="mAcademics"></u></b></div>
+      <div class="meter" title="Cybersecurity skill"><i>CYB</i><b><u id="mCyber"></u></b></div>
+      <div class="meter" title="Energy"><i>NRG</i><b><u id="mEnergy"></u></b></div>
+      <div class="meter" title="Social trust"><i>SOC</i><b><u id="mSocial"></u></b></div>
+      <div class="meter" title="Campus security"><i>SEC</i><b><u id="mSecurity"></u></b></div>
+    </div>
+  </div>
+</header>
+
+<main id="app">
+
+<!-- ══════════════ VIEW: HOME (LANDING) ══════════════ -->
+<section class="view" id="view-home">
+
+  <div class="hero">
+    <p class="hero-eyebrow mono">CYBERSECURITY · PLAYED, NOT LECTURED</p>
+    <h1 class="hero-title">CATCH THE<br><span class="glitch" data-text="HACKER.">HACKER.</span><br>PASS THE WEEK.</h1>
+    <p class="hero-lede">A campus is under attack. The culprit is one of five students or staff.
+    Find them — before your exams find you.</p>
+    <div class="hero-cta">
+      <button class="btn btn-primary btn-big" id="startBtn">▸ Start Game</button>
+      <button class="btn btn-ghost" id="resumeBtn" hidden>Resume Day <span id="resumeDay"></span></button>
+      <a class="scroll-cue mono" href="#howSection">how it works ↓</a>
+    </div>
+  </div>
+
+  <!-- WHAT STUDENTS GET -->
+  <div class="land-section" id="whySection">
+    <p class="sec-eyebrow mono">WHY IT EXISTS</p>
+    <h2 class="sec-title">Real cyber skills,<br>disguised as a mystery.</h2>
+    <p class="sec-lede">Students are the most phished people online — and awareness slideshows don't
+    stick. CyberCampus makes the lesson a game you actually want to finish.</p>
+    <div class="why-cards">
+      <div class="why-card s-reveal">
+        <span class="why-ico">🔍</span>
+        <h3>Think like an investigator</h3>
+        <p>Read real phishing headers, portal logs and keycard records. Learn what evidence proves — and what it doesn't.</p>
+      </div>
+      <div class="why-card s-reveal">
+        <span class="why-ico">🧠</span>
+        <h3>Concepts that stick</h3>
+        <p>Phishing, compromised accounts, access control, incident reporting — taught through decisions, not bullet points.</p>
+      </div>
+      <div class="why-card s-reveal">
+        <span class="why-ico">⚖️</span>
+        <h3>Consequences you feel</h3>
+        <p>Accuse the wrong person and trust collapses. One rule runs the whole game: a login proves <em>when</em>, never <em>who</em>.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW IT PLAYS + DEMO -->
+  <div class="land-section" id="howSection">
+    <p class="sec-eyebrow mono">HOW IT PLAYS</p>
+    <h2 class="sec-title">Watch a case come together.</h2>
+    <div class="demo-wrap">
+      <div class="demo-screen s-reveal" id="demoScreen">
+        <div class="demo-bar mono"><span class="dot"></span><span class="dot"></span><span class="dot"></span> INVESTIGATION BOARD · LIVE</div>
+        <div class="demo-stage" id="demoStage">
+          <svg class="demo-links" id="demoLinks"></svg>
+        </div>
+        <div class="demo-conf"><span class="mono">CONFIDENCE</span><div class="demo-cbar"><i id="demoConf"></i></div><b class="mono" id="demoConfPct">0%</b></div>
+      </div>
+      <ol class="how-steps">
+        <li class="s-reveal"><b>Gather</b><span>Search the campus map and interview suspects to collect clues.</span></li>
+        <li class="s-reveal"><b>Connect</b><span>Drag evidence onto the board and link it to who it points at.</span></li>
+        <li class="s-reveal"><b>Accuse</b><span>Only with proof, a motive, and their side of the story — or you lose.</span></li>
+      </ol>
+    </div>
+    <div class="suspect-strip" id="landingSuspects"></div>
+  </div>
+
+  <!-- START -->
+  <div class="land-section land-final">
+    <h2 class="sec-title">Seven days. One hidden attacker.<br>Your call.</h2>
+    <button class="btn btn-primary btn-big" id="startBtn2">▸ Start Game</button>
+    <p class="fine mono">Randomized culprit every playthrough · desktop &amp; mobile · all characters &amp; incidents fictional</p>
+  </div>
+
+  <footer class="site-footer">
+    <span class="mono">CYBERCAMPUS — a cybersecurity learning game · university designathon prototype</span>
+  </footer>
+</section>
+
+<!-- ══════════════ VIEW: MY SEMESTER ══════════════ -->
+<section class="view game-view" id="view-semester" hidden>
+  <div class="view-head"><p class="sec-eyebrow mono">MY SEMESTER</p><h2>Week of the incident</h2></div>
+  <div class="calendar" id="calendar"></div>
+  <div class="panel" id="semesterNotes"></div>
+</section>
+
+<!-- ══════════════ VIEW: INVESTIGATION BOARD ══════════════ -->
+<section class="view game-view" id="view-board" hidden>
+  <div class="view-head board-head">
+    <div><p class="sec-eyebrow mono">INVESTIGATION BOARD</p><h2>Connect the evidence</h2></div>
+    <div class="board-legend mono">
+      <span class="lg conf">CONFIRMED</span><span class="lg poss">POSSIBLE</span><span class="lg unpr">UNPROVEN</span>
+      <span class="lg hint">drag clues · click a clue, then a suspect, to link</span>
+    </div>
+  </div>
+  <div class="confidence-bar">
+    <span class="mono">EVIDENCE CONFIDENCE</span>
+    <div class="cbar"><div class="cbar-fill" id="confFill"></div></div>
+    <b class="mono" id="confPct">0%</b>
+    <span class="conf-note" id="confNote"></span>
+  </div>
+  <div class="boardwrap">
+    <svg class="board-links" id="boardLinks"></svg>
+    <div class="board" id="board"></div>
+  </div>
+</section>
+
+<!-- ══════════════ VIEW: CAMPUS MAP ══════════════ -->
+<section class="view game-view" id="view-map" hidden>
+  <div class="view-head"><p class="sec-eyebrow mono">CAMPUS MAP · NIGHT GRID</p><h2>Where do you look? <span class="mono map-cost">(1h per visit)</span></h2></div>
+  <div class="mapwrap">
+    <svg id="campusMap" viewBox="0 0 900 520" role="img" aria-label="Campus map with clickable locations"></svg>
+  </div>
+  <div class="panel" id="mapResult"><p class="dim">Select a location to investigate it.</p></div>
+</section>
+
+<!-- ══════════════ VIEW: SUSPECTS ══════════════ -->
+<section class="view game-view" id="view-suspects" hidden>
+  <div class="view-head"><p class="sec-eyebrow mono">SUSPECTS</p><h2>Persons of interest <span class="mono map-cost">(interview: 1h)</span></h2></div>
+  <div class="suspect-grid" id="suspectGrid"></div>
+</section>
+
+<!-- ══════════════ VIEW: DAILY DECISIONS ══════════════ -->
+<section class="view game-view" id="view-decisions" hidden>
+  <div class="view-head"><p class="sec-eyebrow mono">DAILY DECISIONS</p><h2 id="decisionsTitle">How do you spend today?</h2></div>
+  <div class="activity-grid" id="activityGrid"></div>
+  <div class="panel daylog">
+    <p class="mono panel-label">TODAY'S LOG</p>
+    <ul class="logfeed" id="logFeed"></ul>
+  </div>
+</section>
+
+<!-- ══════════════ VIEW: PROGRESS ══════════════ -->
+<section class="view game-view" id="view-progress" hidden>
+  <div class="view-head"><p class="sec-eyebrow mono">GAME PROGRESS</p><h2>Semester status</h2></div>
+  <div class="progress-grid" id="progressGrid"></div>
+  <div class="panel">
+    <p class="mono panel-label">FULL CASE LOG</p>
+    <ul class="logfeed" id="fullLog"></ul>
+  </div>
+</section>
+
+</main>
+
+<!-- ══════════════ MODAL ══════════════ -->
+<div class="modal-veil" id="modalVeil" hidden>
+  <div class="modal" id="modal" role="dialog" aria-modal="true"></div>
+</div>
+
+<!-- ══════════════ TOASTS ══════════════ -->
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+/* ══════════════ CYBERCAMPUS · GAME DATA (all fictional) ══════════════ */
+
+const SUSPECTS = [
+  {
+    id:'ayaan', name:'Ayaan Rahman', role:'Cybersecurity Student', letter:'A',
+    motive:'Believes campus security is negligent and wants to "prove a point" by exposing how weak the student portal really is.',
+    secret:'Downloaded a raw network log without authorization — but he was doing his own investigation, not attacking.',
+    redHerring:'His browser history shows portal vulnerability research and he was awake at 2 AM.',
+    innocentExplain:'The unauthorized log pull was reconnaissance for a report he planned to send to IT anonymously.',
+    schedule:'Night owl. Codes in Lab-07 until 3 AM most nights.',
+    statement:'"Yeah, I pulled a log. Without asking. Because nobody in IT was taking this seriously. That is not the same as sending phishing emails to forty people."'
+  },
+  {
+    id:'sara', name:'Sara Okonkwo', role:'Student Club President', letter:'S',
+    motive:'Furious that the administration cancelled her club\'s flagship event and cut its budget days before the attacks began.',
+    secret:'Shared her portal password with a roommate who used her account off-campus — a real security violation.',
+    redHerring:'Her account shows a login at 02:14 AM, the exact flagged timestamp.',
+    innocentExplain:'She was not on campus. Her roommate borrowed her laptop and her saved credentials.',
+    schedule:'Days packed with club logistics; evenings off-campus at her apartment.',
+    statement:'"My account logged in at 2 AM? I was asleep across town. My roommate has my password — yes, I know, I know. Report me for that. But I didn\'t attack anyone."'
+  },
+  {
+    id:'omar', name:'Omar Haddad', role:'IT Assistant (Student Worker)', letter:'O',
+    motive:'Denied a promotion to full IT staff; wants privileged access to restricted systems he feels he\'s earned.',
+    secret:'Has a keycard that still opens the server room after his shift — and used it at 01:58 AM.',
+    redHerring:'Keycard logs place him inside the IT department minutes before the flagged login.',
+    innocentExplain:'He went back for a charger. The timestamp is real; the intent is not.',
+    schedule:'Afternoon IT shifts; sometimes returns late for forgotten items.',
+    statement:'"I badged in at 1:58, sure. For my phone charger. Check the camera — thirty seconds, in and out. You want the person who sat at a terminal for an hour."'
+  },
+  {
+    id:'maya', name:'Maya Fernandes', role:'Teaching Assistant', letter:'M',
+    motive:'Protective of a struggling student whose records were flagged; distrusts how the university handles data.',
+    secret:'Accessed the student portal at 02:14 AM to quietly fix a grade-record error for that student.',
+    redHerring:'She was logged into the portal admin panel during the incident window.',
+    innocentExplain:'A legitimate (if unauthorized) records fix — not an attack, and not the phishing campaign.',
+    schedule:'Grades late at night after lab hours; frequent portal admin access.',
+    statement:'"I was in the portal at 2:14, fixing a record before a deadline hurt a student. Was that against policy? Probably. Did I email anyone a fake login page? Never."'
+  },
+  {
+    id:'zain', name:'Zain Malik', role:'Student Entrepreneur', letter:'Z',
+    motive:'Racing a rival team to launch a campus app; would gain from accessing a competitor\'s portal-hosted project files.',
+    secret:'Registered a look-alike domain "campus-portaI.net" (capital i) weeks before the phishing wave.',
+    redHerring:'The phishing emails link to the exact look-alike domain he registered.',
+    innocentExplain:null, // this is the strongest thread; whether it's the attacker is randomized
+    schedule:'Everywhere — pitches, events, the student center. Hard to pin down.',
+    statement:'"I registered that domain for a startup idea and never used it. If someone weaponized it for phishing, that is either a wild coincidence… or someone is very deliberately framing me."'
+  }
+];
+
+/* Clues: each has categories of evidence + what it proves / doesn't prove.
+   `points` connect toward the true attacker only when linked to the RIGHT suspect. */
+const CLUES = [
+  { id:1, cat:'Digital', title:'02:14 AM portal login', reliability:'High',
+    source:'Student portal logs',
+    proves:'An account was authenticated at 02:14 AM.',
+    notproves:'Which human being was physically using that account.',
+    detail:'The flagged login belongs to a student account. Timestamps are reliable; identity is not — shared passwords and borrowed laptops both produce this exact record.',
+    x:60, y:40 },
+  { id:2, cat:'Digital', title:'Phishing email headers', reliability:'High',
+    source:'Campus mail gateway',
+    proves:'40 students received a fake "portal suspended" email linking to campus-portaI.net.',
+    notproves:'Who sent it — the sending server was a disposable relay.',
+    detail:'The link target uses a capital "I" in place of the "l" in portal. Header analysis shows the messages were sent through an anonymizing relay, not a campus machine.',
+    x:300, y:40 },
+  { id:3, cat:'Physical', title:'USB drive · Lab-07', reliability:'Medium',
+    source:'Found on lab bench',
+    proves:'Someone left incident_log.txt where you would find it.',
+    notproves:'Whether the person who left it is the attacker or a tipster.',
+    detail:'The drive was planted — either by the attacker taunting you, or by someone trying to point you at the truth. The log file itself is genuine.',
+    x:540, y:40 },
+  { id:4, cat:'University', title:'Keycard: server room 01:58 AM', reliability:'High',
+    source:'Door access system',
+    proves:'Omar\'s keycard opened the IT server room at 01:58 AM.',
+    notproves:'That he sat at a terminal — camera shows a 30-second visit.',
+    detail:'Physical presence near the incident window. Corroborate with camera footage before drawing conclusions.',
+    x:60, y:230 },
+  { id:5, cat:'Social', title:'Sara\'s alibi + shared password', reliability:'Medium',
+    source:'Interview + roommate statement',
+    proves:'Sara shared her password; her roommate used the account off-campus.',
+    notproves:'That the 02:14 login was malicious rather than careless.',
+    detail:'A real security violation that explains the login without implicating Sara in the phishing campaign. Classic false-lead: suspicious behavior unrelated to the attack.',
+    x:300, y:230 },
+  { id:6, cat:'Digital', title:'Look-alike domain registration', reliability:'High',
+    source:'Public WHOIS record',
+    proves:'campus-portaI.net was registered weeks before the phishing wave.',
+    notproves:'That the registrant personally sent the emails.',
+    detail:'The domain used in the phishing links. The registrant is on record — but registration alone is not sending, and a framed suspect is possible.',
+    x:540, y:230 }
+];
+
+const LOCATIONS = [
+  { id:'lab', name:'Computer Lab', sub:'LAB-07', x:80, y:70, w:190, h:92, clue:3,
+    text:'You return to Lab-07. Beside the USB drive, a sticky note in the recycling reads: "check the domain, not the timestamp." Someone here knows more than they\'re saying.' },
+  { id:'library', name:'Library', sub:'ARCHIVES', x:340, y:60, w:180, h:90, clue:null,
+    text:'A forgotten notebook in a study carrel is full of portal vulnerability notes — and a signature scribble that looks like Ayaan\'s. Evidence he was investigating… or planning.' },
+  { id:'it', name:'IT Department', sub:'SERVER ROOM', x:600, y:70, w:200, h:96, clue:4,
+    text:'The door access terminal confirms a 01:58 AM badge-in on Omar\'s card. The hallway camera log is timestamped but the footage window is only 34 seconds long.' },
+  { id:'center', name:'Student Center', sub:'HUB', x:120, y:220, w:190, h:92, clue:null,
+    text:'Zain is pitching his campus app to a crowd. Between slides, someone whispers that his rival\'s project files were "already leaked." No proof — just a rumor worth logging.' },
+  { id:'clubs', name:'Student Clubs', sub:'ANNEX', x:380, y:230, w:170, h:88, clue:5,
+    text:'Sara\'s club office. Her roommate is here and admits borrowing Sara\'s laptop "all the time — her password\'s saved in the browser." That explains the 2:14 login without explaining the attack.' },
+  { id:'dorms', name:'Dorms', sub:'BLOCK C', x:610, y:225, w:190, h:94, clue:6,
+    text:'A printed WHOIS record is taped inside a common-room bulletin board: campus-portaI.net, registered weeks ago to a campus contact. Whoever posted it wanted this found.' }
+];
+
+/* Seven-day calendar */
+const CALENDAR = [
+  { day:1, name:'MON', items:[['class','Intro to Networks'],['incident','Portal breach announced'],['due','Cyber lab due tomorrow']] },
+  { day:2, name:'TUE', items:[['class','Calculus lecture'],['due','Cyber lab DUE'],['incident','Odd login flagged']] },
+  { day:3, name:'WED', items:[['class','Networks'],['social','Club event 7PM'],['incident','Phishing wave · 40 students']] },
+  { day:4, name:'THU', items:[['exam','CALCULUS EXAM'],['class','Ethics seminar']] },
+  { day:5, name:'FRI', items:[['class','Networks lab'],['incident','Second phishing attempt']] },
+  { day:6, name:'SAT', items:[['social','Study group'],['incident','Portal probing detected']] },
+  { day:7, name:'SUN', items:[['incident','FINAL ATTACK on portal'],['exam','Accusation window']] }
+];
+
+/* Nightly attacker escalation lines (shown when incidents are ignored) */
+const ESCALATIONS = [
+  'A new phishing email hit 40 students. You did not warn them in time.',
+  'The attacker probed the grade database. Campus security drops.',
+  'Password-reset spoof sent to first-year students overnight.',
+  'The portal login page was cloned. More accounts at risk.',
+  'Admin credentials were tested against the portal. Getting closer.',
+  'The attacker staged files for the final push on the portal.'
+];
+
+</script>
+<script>
+/* ══════════════ CYBERCAMPUS · GAME ENGINE ══════════════ */
+(function(){
+'use strict';
+const $ = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const clamp=(n,a=0,b=100)=>Math.max(a,Math.min(b,n));
+const HOURS_PER_DAY=14;
+
+/* ---------- STATE ---------- */
+let S=null;
+function freshState(){
+  // randomize the attacker; Zain is weighted plausible but NOT guaranteed
+  const attacker = SUSPECTS[Math.floor(Math.random()*SUSPECTS.length)].id;
+  return {
+    started:false, day:1, hours:HOURS_PER_DAY, view:'home',
+    stats:{academics:60,cyber:35,energy:80,social:55,security:70},
+    attacker,
+    foundClues:[],                       // clue ids discovered
+    clueStatus:{},                       // id -> 'unproven'|'possible'|'confirmed'
+    links:[],                            // {clue, suspect}
+    boardPos:{},                         // id -> {x,y}
+    interviewed:[],                      // suspect ids
+    trust:{ayaan:60,sara:60,omar:60,maya:60,zain:55},
+    accusationsMade:0,
+    visited:[],
+    log:[],
+    escalations:0,
+    reported:false,
+    ended:false
+  };
+}
+const SAVE_KEY='cybercampus_v1';
+function save(){ try{localStorage.setItem(SAVE_KEY,JSON.stringify(S));}catch(e){} }
+function load(){ try{const r=localStorage.getItem(SAVE_KEY);return r?JSON.parse(r):null;}catch(e){return null;} }
+
+/* ---------- LOG ---------- */
+function logEntry(text,kind=''){
+  S.log.unshift({text,kind,day:S.day,t:Date.now()});
+  renderLog();
+}
+
+/* ---------- TOASTS ---------- */
+function toast(msg,kind='',tag='UPDATE'){
+  const el=document.createElement('div');
+  el.className='toast '+kind;
+  el.innerHTML=`<span class="mono">${tag}</span>${msg}`;
+  $('#toasts').appendChild(el);
+  setTimeout(()=>{el.style.transition='opacity .4s,transform .4s';el.style.opacity='0';el.style.transform='translateX(30px)';setTimeout(()=>el.remove(),400);},4200);
+}
+
+/* ---------- STATS ---------- */
+function adjust(changes){
+  for(const k in changes){ S.stats[k]=clamp(S.stats[k]+changes[k]); }
+  renderHUD(); renderProgress();
+}
+function statDelta(changes){
+  return Object.entries(changes).map(([k,v])=>`${k.slice(0,3).toUpperCase()} ${v>0?'+':''}${v}`).join('  ');
+}
+
+/* ---------- NAV / VIEWS ---------- */
+function gate(on){
+  $$('.mainnav a.gated').forEach(a=>a.classList.toggle('locked',!on));
+}
+function show(view){
+  S.view=view;
+  $$('.view').forEach(v=>v.hidden = v.id!=='view-'+view);
+  $$('.mainnav a').forEach(a=>a.classList.toggle('active',a.dataset.view===view));
+  $('#mainnav').classList.remove('open');
+  window.scrollTo({top:0,behavior:'auto'});
+  if(view==='semester')renderCalendar();
+  if(view==='board')renderBoard();
+  if(view==='map')renderMap();
+  if(view==='suspects')renderSuspects();
+  if(view==='decisions')renderDecisions();
+  if(view==='progress')renderProgress();
+  if(S.started)save();
+}
+
+/* ---------- HUD ---------- */
+const DAYNAMES=['','MON','TUE','WED','THU','FRI','SAT','SUN'];
+function renderHUD(){
+  if(!S.started){ $('#hud').hidden=true; return; }
+  $('#hud').hidden=false;
+  $('#hudDay').textContent='DAY '+S.day;
+  $('#hudDate').textContent=DAYNAMES[S.day];
+  $('#hudHours').textContent=S.hours+'h';
+  const map={mAcademics:'academics',mCyber:'cyber',mEnergy:'energy',mSocial:'social',mSecurity:'security'};
+  for(const el in map){
+    const v=S.stats[map[el]], bar=$('#'+el);
+    bar.style.width=v+'%';
+    bar.classList.toggle('low',v<30); bar.classList.toggle('mid',v>=30&&v<55);
+  }
+}
+
+/* ---------- LANDING (GSAP) ---------- */
+function renderLandingSuspects(){
+  const wrap=$('#landingSuspects'); wrap.innerHTML='';
+  SUSPECTS.forEach(s=>{
+    const d=document.createElement('div');
+    d.className='sus-mini s-reveal';
+    d.innerHTML=`<div class="avatar a-${s.id}">${s.letter}</div>
+      <h3>${s.name.split(' ')[0]}</h3><div class="role mono">${s.role}</div>
+      <p>${s.motive.split('.')[0]}.</p>`;
+    wrap.appendChild(d);
+  });
+}
+function initScroll(){
+  if(typeof gsap==='undefined')return;
+  gsap.registerPlugin(ScrollTrigger);
+  const rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(rm)return;
+  // hero entrance
+  gsap.from('.hero-eyebrow',{y:20,opacity:0,duration:.7,ease:'power2.out'});
+  gsap.from('.hero-title',{y:36,opacity:0,duration:.95,delay:.1,ease:'power3.out'});
+  gsap.from('.hero-lede',{y:24,opacity:0,duration:.8,delay:.35,ease:'power2.out'});
+  gsap.from('.hero-cta',{y:20,opacity:0,duration:.8,delay:.5,ease:'power2.out'});
+  // section reveals + titles
+  $$('.land-section').forEach(sec=>{
+    const items=sec.querySelectorAll('.s-reveal');
+    gsap.from(sec.querySelectorAll('.sec-eyebrow,.sec-title,.sec-lede'),{
+      y:30,opacity:0,duration:.7,stagger:.08,ease:'power2.out',
+      scrollTrigger:{trigger:sec,start:'top 80%'}
+    });
+    if(items.length){
+      gsap.from(items,{y:44,opacity:0,duration:.65,stagger:.1,ease:'power2.out',
+        scrollTrigger:{trigger:sec,start:'top 74%'}});
+    }
+  });
+}
+/* fire the self-playing demo when it scrolls into view — IntersectionObserver
+   is robust across scroll-container quirks where ScrollTrigger can miss. */
+function initDemoObserver(){
+  const el=$('#demoScreen'); if(!el)return;
+  let fired=false;
+  const io=new IntersectionObserver(es=>{
+    es.forEach(e=>{ if(e.isIntersecting && !fired){ fired=true; playDemo(); io.disconnect(); } });
+  },{threshold:.35});
+  io.observe(el);
+}
+
+/* ---------- ANIMATED BACKGROUND (particle network) ---------- */
+function initBackground(){
+  const cv=$('#bgCanvas'); if(!cv)return;
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const ctx=cv.getContext('2d');
+  let w,h,dots,raf;
+  function size(){ w=cv.width=innerWidth*devicePixelRatio; h=cv.height=innerHeight*devicePixelRatio;
+    cv.style.width=innerWidth+'px'; cv.style.height=innerHeight+'px'; }
+  function build(){
+    const n=Math.min(70,Math.floor(innerWidth/22));
+    dots=[...Array(n)].map(()=>({x:Math.random()*w,y:Math.random()*h,
+      vx:(Math.random()-.5)*.22*devicePixelRatio,vy:(Math.random()-.5)*.22*devicePixelRatio}));
+  }
+  const LINK=130*devicePixelRatio;
+  function frame(){
+    ctx.clearRect(0,0,w,h);
+    for(const d of dots){
+      d.x+=d.vx; d.y+=d.vy;
+      if(d.x<0||d.x>w)d.vx*=-1; if(d.y<0||d.y>h)d.vy*=-1;
+    }
+    for(let i=0;i<dots.length;i++){
+      for(let j=i+1;j<dots.length;j++){
+        const a=dots[i],b=dots[j],dx=a.x-b.x,dy=a.y-b.y,dist=Math.hypot(dx,dy);
+        if(dist<LINK){
+          ctx.strokeStyle=`rgba(87,230,255,${(1-dist/LINK)*0.12})`;
+          ctx.lineWidth=devicePixelRatio;
+          ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+        }
+      }
+      ctx.fillStyle='rgba(87,230,255,0.5)';
+      ctx.beginPath();ctx.arc(dots[i].x,dots[i].y,1.3*devicePixelRatio,0,7);ctx.fill();
+    }
+    raf=requestAnimationFrame(frame);
+  }
+  size();build();frame();
+  let to; addEventListener('resize',()=>{clearTimeout(to);to=setTimeout(()=>{size();build();},200);});
+}
+
+/* ---------- SELF-PLAYING DEMO ---------- */
+function playDemo(){
+  const stage=$('#demoStage'); if(!stage||typeof gsap==='undefined')return;
+  // clear any prior
+  stage.querySelectorAll('.demo-chip,.demo-sus').forEach(e=>e.remove());
+  const links=$('#demoLinks'); links.innerHTML='';
+  const chips=[
+    {id:'02',t:'02:14 AM portal login',x:14,y:22},
+    {id:'06',t:'Look-alike domain',x:14,y:150},
+    {id:'04',t:'Keycard · 01:58 AM',x:210,y:200}
+  ];
+  const sus={name:'Zain',role:'ENTREPRENEUR',letter:'Z',cls:'a-zain',x:'calc(100% - 128px)',y:70};
+  chips.forEach(c=>{
+    const el=document.createElement('div');el.className='demo-chip';
+    el.style.left=c.x+'px';el.style.top=c.y+'px';
+    el.innerHTML=`<span class="dc-id">CLUE #${c.id}</span><div class="dc-t">${c.t}</div><span class="dc-r">RELIABILITY: HIGH</span>`;
+    stage.appendChild(el);c._el=el;
+  });
+  const sn=document.createElement('div');sn.className='demo-sus';
+  sn.style.left=sus.x;sn.style.top=sus.y+'px';
+  sn.innerHTML=`<div class="avatar ${sus.cls}">${sus.letter}</div><h5>${sus.name}</h5><div class="role">${sus.role}</div>`;
+  stage.appendChild(sn);
+
+  // reduced-motion: paint the finished state, no timeline
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    gsap.set([sn,...chips.map(c=>c._el)],{opacity:1,y:0});
+    sn.classList.add('flag');
+    const st=stage.getBoundingClientRect();
+    chips.forEach(c=>{
+      const sr=sn.getBoundingClientRect(),cr=c._el.getBoundingClientRect();
+      const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',cr.right-st.left);line.setAttribute('y1',cr.top-st.top+22);
+      line.setAttribute('x2',sr.left-st.left+10);line.setAttribute('y2',sr.top-st.top+30);
+      line.style.opacity='.8';links.appendChild(line);
+    });
+    $('#demoConf').style.width='92%';$('#demoConfPct').textContent='92%';
+    return;
+  }
+
+  const tl=gsap.timeline({repeat:-1,repeatDelay:1.6});
+  tl.to(sn,{opacity:1,y:0,duration:.5,ease:'power2.out'});
+  chips.forEach((c,i)=>{
+    tl.fromTo(c._el,{opacity:0,y:16},{opacity:1,y:0,duration:.45,ease:'power2.out'},'+=0.25');
+    // draw a link from chip to suspect
+    tl.add(()=>{
+      const sr=sn.getBoundingClientRect(),cr=c._el.getBoundingClientRect(),st=stage.getBoundingClientRect();
+      const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',cr.right-st.left);line.setAttribute('y1',cr.top-st.top+22);
+      line.setAttribute('x2',sr.left-st.left+10);line.setAttribute('y2',sr.top-st.top+30);
+      links.appendChild(line);gsap.to(line,{opacity:.8,duration:.4});
+    },'+=0.1');
+    tl.to('#demoConf',{width:(20+ (i+1)*26)+'%',duration:.5,ease:'power2.out'},'<');
+    tl.add(()=>{$('#demoConfPct').textContent=Math.min(92,(20+(i+1)*26))+'%';},'<');
+  });
+  tl.to(sn,{},'+=0.2').add(()=>sn.classList.add('flag'));
+  // reset for the loop
+  tl.to({},{duration:1.4});
+  tl.add(()=>{
+    sn.classList.remove('flag');links.innerHTML='';
+    $('#demoConf').style.width='0%';$('#demoConfPct').textContent='0%';
+    chips.forEach(c=>gsap.set(c._el,{opacity:0}));gsap.set(sn,{opacity:0});
+  });
+}
+
+/* ---------- BODY PLAYING FLAG ---------- */
+function setPlaying(on){ document.body.classList.toggle('playing',on); }
+
+/* ---------- START / RESUME ---------- */
+function startGame(){
+  S=freshState(); S.started=true;
+  gate(true); setPlaying(true); renderHUD(); save();
+  openIntro();
+}
+function resumeGame(){
+  gate(true); setPlaying(true); renderHUD(); show('decisions');
+}
+
+/* ---------- INTRO SCENARIO (modal chain) ---------- */
+function openIntro(){
+  modal(`
+    <p class="m-tag">MONDAY · 08:41 · COMPUTER LAB (LAB-07)</p>
+    <h3>incident_log.txt</h3>
+    <p>You followed the anonymous message to the computer lab. On a bench: a USB drive.
+    One file. You open it.</p>
+    <pre class="m-log">&gt; 02:14:07  LOGIN  acct=student  status=FLAGGED
+&gt; 02:14:52  ACCESS  /portal/records  (off-schedule)
+&gt; 02:19:33  MSG  anon: "You should have listened."</pre>
+    <p>Three suspicious lines. A cancelled event, a denied promotion, a look-alike domain —
+    any of five people could be behind this. And you have a Calculus exam Thursday.</p>
+    <p><b>What do you do first?</b></p>
+    <div class="m-choices">
+      <button class="btn btn-primary" data-choice="investigate">Investigate immediately<span class="mono">−1h · CYB +6 · NRG −5</span></button>
+      <button class="btn" data-choice="report">Report it to IT and log the evidence<span class="mono">SEC +8 · social trust +</span></button>
+      <button class="btn" data-choice="exam">Ignore it — study for the exam<span class="mono">ACA +8 · attacker escalates</span></button>
+    </div>
+  `,{dismissable:false});
+  $$('#modal .btn').forEach(b=>b.onclick=()=>introChoice(b.dataset.choice));
+}
+function introChoice(c){
+  S.foundClues.push(3); S.clueStatus[3]='unproven'; S.visited.push('lab');
+  if(c==='investigate'){
+    S.hours-=1; adjust({cyber:6,energy:-5});
+    logEntry('Investigated the USB immediately. Recovered incident_log.txt.','good');
+    toast('Clue #3 added to your board.','good','EVIDENCE');
+    S.foundClues.push(1); S.clueStatus[1]='unproven';
+  } else if(c==='report'){
+    S.reported=true; adjust({security:8}); bumpTrust('all',4);
+    logEntry('Reported the breach to IT. Security posture improved; students trust you.','good');
+    toast('Reported to IT — campus security up.','good','SECURITY');
+  } else {
+    adjust({academics:8}); S.escalations++;
+    logEntry('Chose the exam over the breach. The attacker used the night.','bad');
+    escalate();
+  }
+  closeModal();
+  show('decisions');
+  toast('Day 1 has begun. Spend your hours wisely.','','DAY 1');
+}
+
+/* ---------- ATTACKER ESCALATION ---------- */
+function escalate(){
+  const line=ESCALATIONS[Math.min(S.escalations,ESCALATIONS.length-1)];
+  adjust({security:-9});
+  logEntry('ATTACKER MOVE: '+line,'bad');
+  toast(line,'bad','23:48 · ATTACK');
+  S.escalations++;
+}
+
+/* ---------- TRUST ---------- */
+function bumpTrust(who,amt){
+  if(who==='all'){ for(const k in S.trust)S.trust[k]=clamp(S.trust[k]+amt); }
+  else S.trust[who]=clamp(S.trust[who]+amt);
+}
+
+/* ---------- CALENDAR ---------- */
+function renderCalendar(){
+  const c=$('#calendar'); c.innerHTML='';
+  CALENDAR.forEach(d=>{
+    const el=document.createElement('div');
+    el.className='cal-day'+(d.day===S.day?' today':'')+(d.day<S.day?' past':'');
+    el.innerHTML=`<span class="cd-name">${d.name} · DAY ${d.day}</span>`+
+      d.items.map(([t,label])=>`<div class="cal-item ${t}">${label}</div>`).join('');
+    c.appendChild(el);
+  });
+  $('#semesterNotes').innerHTML=`<p class="panel-label mono">TIME BUDGET</p>
+    <p>You have <b>${S.hours} hours</b> left today (Day ${S.day} · ${DAYNAMES[S.day]}).
+    Each day resets to ${HOURS_PER_DAY} hours after you sleep. The final attack lands on
+    <b>Sunday, Day 7</b> — make your accusation before then, with evidence you can defend.</p>`;
+}
+
+/* ---------- BOARD (drag + connect) ---------- */
+function renderBoard(){
+  const board=$('#board'), svg=$('#boardLinks');
+  board.innerHTML=''; svg.innerHTML='';
+  const found=CLUES.filter(c=>S.foundClues.includes(c.id));
+  if(!found.length){
+    board.innerHTML=`<p class="dim" style="padding:2rem">No clues yet. Visit the
+      <a href="#" data-goto="map">Campus Map</a> and interview
+      <a href="#" data-goto="suspects">suspects</a> to gather evidence.</p>`;
+    board.querySelectorAll('[data-goto]').forEach(a=>a.onclick=e=>{e.preventDefault();show(a.dataset.goto);});
+    updateConfidence(); return;
+  }
+  // clue cards
+  found.forEach((c,i)=>{
+    const pos=S.boardPos['c'+c.id]||{x:c.x,y:c.y};
+    S.boardPos['c'+c.id]=pos;
+    const st=S.clueStatus[c.id]||'unproven';
+    const el=document.createElement('div');
+    el.className='clue-card'; el.dataset.clue=c.id;
+    el.style.left=pos.x+'px'; el.style.top=pos.y+'px';
+    el.innerHTML=`
+      <div class="cc-top"><span class="cc-id">CLUE #${String(c.id).padStart(2,'0')}</span>
+        <span class="cc-rel ${c.reliability} mono">${c.reliability.toUpperCase()}</span></div>
+      <h4>${c.title}</h4>
+      <div class="cc-src">${c.cat} · ${c.source}</div>
+      <span class="cc-status ${st}" data-cyclestatus>${st.toUpperCase()}</span>
+      <span class="cc-info" data-info>ⓘ what it proves</span>`;
+    board.appendChild(el);
+    makeDraggable(el,'c'+c.id);
+    el.querySelector('[data-cyclestatus]').onclick=e=>{e.stopPropagation();cycleStatus(c.id);};
+    el.querySelector('[data-info]').onclick=e=>{e.stopPropagation();clueDetail(c);};
+    el.onclick=()=>selectClue(c.id,el);
+  });
+  // suspect nodes (right side column)
+  SUSPECTS.forEach((s,i)=>{
+    const pos=S.boardPos['s'+s.id]||{x:780,y:20+i*118};
+    S.boardPos['s'+s.id]=pos;
+    const el=document.createElement('div');
+    el.className='sus-node'; el.dataset.suspect=s.id;
+    el.style.left=pos.x+'px'; el.style.top=pos.y+'px';
+    const links=S.links.filter(l=>l.suspect===s.id).length;
+    el.innerHTML=`<div class="avatar a-${s.id}">${s.letter}</div>
+      <h4>${s.name.split(' ')[0]}</h4><div class="role">${s.role.split(' ')[0]}</div>
+      ${links?`<span class="linked-count">${links} link${links>1?'s':''}</span>`:''}`;
+    board.appendChild(el);
+    makeDraggable(el,'s'+s.id);
+    el.onclick=()=>{ if(selectedClue!=null){ linkClue(selectedClue,s.id); } };
+  });
+  drawLinks(); updateConfidence();
+}
+let selectedClue=null;
+function selectClue(id,el){
+  if(selectedClue===id){selectedClue=null;$$('.clue-card').forEach(c=>c.classList.remove('selected'));return;}
+  selectedClue=id;
+  $$('.clue-card').forEach(c=>c.classList.toggle('selected',c.dataset.clue==id));
+  toast('Now click a suspect to connect this clue.','','LINK MODE');
+}
+function linkClue(clueId,suspectId){
+  if(S.links.some(l=>l.clue===clueId&&l.suspect===suspectId)){
+    S.links=S.links.filter(l=>!(l.clue===clueId&&l.suspect===suspectId));
+  } else {
+    S.links.push({clue:clueId,suspect:suspectId});
+  }
+  selectedClue=null; renderBoard(); save();
+}
+function cycleStatus(id){
+  const order=['unproven','possible','confirmed'];
+  const cur=S.clueStatus[id]||'unproven';
+  S.clueStatus[id]=order[(order.indexOf(cur)+1)%3];
+  renderBoard(); save();
+}
+function drawLinks(){
+  const svg=$('#boardLinks'); svg.innerHTML='';
+  S.links.forEach(l=>{
+    const cp=S.boardPos['c'+l.clue], sp=S.boardPos['s'+l.suspect];
+    if(!cp||!sp)return;
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',cp.x+107);line.setAttribute('y1',cp.y+40);
+    line.setAttribute('x2',sp.x+75);line.setAttribute('y2',sp.y+35);
+    svg.appendChild(line);
+  });
+}
+function makeDraggable(el,key){
+  let sx,sy,ox,oy,drag=false;
+  const down=e=>{
+    if(e.target.closest('[data-cyclestatus],[data-info]'))return;
+    drag=true; const p=point(e); sx=p.x; sy=p.y;
+    ox=S.boardPos[key].x; oy=S.boardPos[key].y;
+    el.style.zIndex=50; el.style.cursor='grabbing';
+    document.addEventListener('pointermove',move);
+    document.addEventListener('pointerup',up);
+  };
+  const move=e=>{
+    if(!drag)return;
+    const p=point(e), bw=$('#board').clientWidth, bh=$('#board').clientHeight;
+    S.boardPos[key].x=clamp(ox+(p.x-sx),0,bw-el.offsetWidth);
+    S.boardPos[key].y=clamp(oy+(p.y-sy),0,bh-el.offsetHeight);
+    el.style.left=S.boardPos[key].x+'px'; el.style.top=S.boardPos[key].y+'px';
+    drawLinks();
+  };
+  const up=()=>{drag=false;el.style.zIndex='';el.style.cursor='';document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);save();};
+  el.addEventListener('pointerdown',down);
+  function point(e){const r=$('#board').getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
+}
+function clueDetail(c){
+  modal(`<p class="m-tag cyan">CLUE #${String(c.id).padStart(2,'0')} · ${c.cat.toUpperCase()} EVIDENCE</p>
+    <h3>${c.title}</h3>
+    <p class="dim mono small">SOURCE: ${c.source} &nbsp;·&nbsp; RELIABILITY: ${c.reliability}</p>
+    <p>${c.detail}</p>
+    <div class="clue-detail">
+      <div class="clue-demo-row proves"><span>PROVES</span><p>${c.proves}</p></div>
+      <div class="clue-demo-row notproves"><span>DOES NOT PROVE</span><p>${c.notproves}</p></div>
+    </div>
+    <div class="m-choices"><button class="btn btn-primary" data-close>Back to board</button></div>`);
+  $('#modal [data-close]').onclick=closeModal;
+}
+function updateConfidence(){
+  // Confidence rewards RELIABLE, CONFIRMED clues linked to the true attacker — not clue count.
+  let score=0;
+  S.links.forEach(l=>{
+    const clue=CLUES.find(c=>c.id===l.clue);
+    const st=S.clueStatus[l.clue]||'unproven';
+    let w = clue.reliability==='High'?12:clue.reliability==='Medium'?7:4;
+    if(st==='confirmed')w*=1.5; else if(st==='unproven')w*=0.5;
+    if(l.suspect===S.attacker)score+=w; else score-=w*0.4; // wrong links reduce confidence
+  });
+  const pct=clamp(Math.round(score),0,100);
+  S.confidence=pct;
+  const fill=$('#confFill'); if(fill){fill.style.width=pct+'%';$('#confPct').textContent=pct+'%';}
+  const note=$('#confNote');
+  if(note){
+    note.textContent = pct<25?'Weak case — mostly theory.':pct<55?'A working theory. Confirm your high-reliability clues.':pct<80?'Strong case forming. Hear the suspect out before accusing.':'Solid, defensible case.';
+  }
+}
+
+/* ---------- MAP ---------- */
+function renderMap(){
+  const svg=$('#campusMap'); svg.innerHTML='';
+  // ambient paths between buildings
+  const paths=[[175,162,215,220],[430,150,465,230],[700,166,705,225],[270,116,340,105],[520,105,600,118]];
+  paths.forEach(p=>{
+    const l=document.createElementNS('http://www.w3.org/2000/svg','path');
+    l.setAttribute('d',`M${p[0]} ${p[1]} L${p[2]} ${p[3]}`); l.setAttribute('class','map-path');
+    svg.appendChild(l);
+  });
+  LOCATIONS.forEach(loc=>{
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class','loc'+(S.visited.includes(loc.id)?' visited':''));
+    g.innerHTML=`<rect x="${loc.x}" y="${loc.y}" width="${loc.w}" height="${loc.h}" rx="8"/>
+      <text x="${loc.x+16}" y="${loc.y+38}">${loc.name}</text>
+      <text class="loc-sub" x="${loc.x+16}" y="${loc.y+58}">${loc.sub}${S.visited.includes(loc.id)?' · VISITED':''}</text>`;
+    g.style.cursor='pointer';
+    g.onclick=()=>visitLocation(loc);
+    svg.appendChild(g);
+  });
+}
+function visitLocation(loc){
+  if(S.hours<1){ toast('Not enough hours today. Sleep to reset.','warn','TIME'); return; }
+  if(S.visited.includes(loc.id)){
+    modal(`<p class="m-tag cyan">${loc.name.toUpperCase()} · ${loc.sub}</p><h3>Already searched</h3>
+      <p>${loc.text}</p><div class="m-choices"><button class="btn" data-close>Close</button></div>`);
+    $('#modal [data-close]').onclick=closeModal; return;
+  }
+  S.hours-=1; S.visited.push(loc.id); adjust({cyber:3,energy:-3});
+  let gained='';
+  if(loc.clue && !S.foundClues.includes(loc.clue)){
+    S.foundClues.push(loc.clue); S.clueStatus[loc.clue]='unproven';
+    const c=CLUES.find(x=>x.id===loc.clue);
+    gained=`<p class="m-quote">New clue added: <b>#${String(c.id).padStart(2,'0')} — ${c.title}</b></p>`;
+    toast('Clue #'+c.id+' added to your board.','good','EVIDENCE');
+  }
+  logEntry('Searched the '+loc.name+'.','good');
+  modal(`<p class="m-tag cyan">${loc.name.toUpperCase()} · ${loc.sub}</p><h3>You investigate</h3>
+    <p>${loc.text}</p>${gained}
+    <div class="m-choices">
+      <button class="btn btn-primary" data-board>Open investigation board</button>
+      <button class="btn" data-close>Keep looking</button></div>`);
+  $('#modal [data-board]').onclick=()=>{closeModal();show('board');};
+  $('#modal [data-close]').onclick=()=>{closeModal();renderMap();};
+  renderHUD(); save();
+}
+
+/* ---------- SUSPECTS ---------- */
+function renderSuspects(){
+  const g=$('#suspectGrid'); g.innerHTML='';
+  SUSPECTS.forEach(s=>{
+    const t=S.trust[s.id];
+    const cleared=S.cleared&&S.cleared.includes(s.id);
+    const el=document.createElement('div');
+    el.className='sus-card';
+    el.innerHTML=`
+      <div class="sus-top"><div class="avatar a-${s.id}">${s.letter}</div>
+        <div><h3>${s.name}</h3><div class="role">${s.role}</div></div></div>
+      <p class="motive"><b>Motive:</b> ${s.motive}</p>
+      <div class="trust-row"><span>TRUST</span>
+        <div class="tbar"><i class="${t<30?'low':t<55?'mid':''}" style="width:${t}%"></i></div>
+        <b class="mono">${t}</b></div>
+      ${S.interviewed.includes(s.id)?`<p class="sus-note ${cleared?'cleared':''}">${cleared?'✓ You heard their alibi.':'Interviewed — statement on file.'}</p>`:''}
+      <div class="sus-actions">
+        <button class="btn" data-interview="${s.id}">Interview <span class="mono">1h</span></button>
+        <button class="btn btn-danger" data-accuse="${s.id}">Accuse</button>
+      </div>`;
+    g.appendChild(el);
+  });
+  g.querySelectorAll('[data-interview]').forEach(b=>b.onclick=()=>interview(b.dataset.interview));
+  g.querySelectorAll('[data-accuse]').forEach(b=>b.onclick=()=>attemptAccuse(b.dataset.accuse));
+}
+function interview(id){
+  const s=SUSPECTS.find(x=>x.id===id);
+  if(!S.interviewed.includes(id)){
+    if(S.hours<1){ toast('Not enough hours today.','warn','TIME'); return; }
+    S.hours-=1; adjust({social:2,energy:-3});
+    S.interviewed.push(id); S.cleared=S.cleared||[];
+    if(s.innocentExplain && id!==S.attacker) S.cleared.push(id);
+    logEntry('Interviewed '+s.name+'.','');
+    bumpTrust(id,3);
+  }
+  modal(`<p class="m-tag">INTERVIEW · ${s.role.toUpperCase()}</p>
+    <h3>${s.name}</h3>
+    <p class="dim">${s.schedule}</p>
+    <p class="m-quote">${s.statement}</p>
+    <p><b>Their secret:</b> ${s.secret}</p>
+    ${id===S.attacker?'':`<p class="dim small">This may be suspicious behavior unrelated to the attack. Weigh what the evidence actually proves.</p>`}
+    <div class="m-choices">
+      <button class="btn btn-primary" data-board>Log it &amp; open board</button>
+      <button class="btn" data-close>Close</button></div>`);
+  $('#modal [data-board]').onclick=()=>{closeModal();show('board');};
+  $('#modal [data-close]').onclick=closeModal;
+  renderHUD(); renderSuspects(); save();
+}
+
+/* ---------- ACCUSATION ---------- */
+function attemptAccuse(id){
+  const s=SUSPECTS.find(x=>x.id===id);
+  const linked=S.links.filter(l=>l.suspect===id).length;
+  const heard=S.interviewed.includes(id);
+  const conf=S.confidence||0;
+  // The trust system gate: need evidence + interview + mechanism (confidence)
+  const requirements=[];
+  if(linked<1)requirements.push('link at least one clue to this suspect on the board');
+  if(!heard)requirements.push('interview them to hear their response');
+  if(conf<40 && id===S.attacker)requirements.push('build your evidence confidence above 40%');
+  modal(`<p class="m-tag">FORMAL ACCUSATION</p>
+    <h3>Accuse ${s.name}?</h3>
+    <p>You are about to name <b>${s.name}</b> as the attacker. An unsupported accusation
+    costs trust across campus and gives the attacker another night.</p>
+    <div class="clue-detail">
+      <div class="clue-demo-row ${linked?'proves':'notproves'}"><span>EVIDENCE</span><p>${linked} clue${linked!==1?'s':''} linked to this suspect.</p></div>
+      <div class="clue-demo-row ${heard?'proves':'notproves'}"><span>RESPONSE</span><p>${heard?'You have heard their statement.':'You have NOT interviewed them.'}</p></div>
+      <div class="clue-demo-row ${conf>=40?'proves':'notproves'}"><span>CONFIDENCE</span><p>Evidence confidence: ${conf}%.</p></div>
+    </div>
+    ${requirements.length?`<p class="sus-note">Weak case. To accuse responsibly you should: ${requirements.join('; ')}.</p>`:''}
+    <div class="m-choices">
+      <button class="btn btn-danger" data-confirm>Accuse anyway</button>
+      <button class="btn" data-close>Keep investigating</button></div>`);
+  $('#modal [data-confirm]').onclick=()=>resolveAccusation(id,requirements.length===0);
+  $('#modal [data-close]').onclick=closeModal;
+}
+function resolveAccusation(id,wellSupported){
+  S.accusationsMade++;
+  const correct = id===S.attacker;
+  if(correct && wellSupported){
+    return ending('win-clean',id);
+  }
+  if(correct && !wellSupported){
+    // right person, weak case — they walk, trust damaged
+    bumpTrust('all',-14); adjust({social:-14,security:-6});
+    S.escalations++;
+    logEntry('Accused '+SUSPECTS.find(s=>s.id===id).name+' without a defensible case. The claim was dismissed.','bad');
+    modal(`<p class="m-tag">ACCUSATION DISMISSED</p><h3>Right instinct. Wrong process.</h3>
+      <p>You named the actual attacker — but without linked evidence, a heard response, and
+      real confidence, the disciplinary board threw it out. Your reputation took the hit, and
+      the attacker now knows you're onto them.</p>
+      <p class="sus-note">A compromised account is not proof of who used it. Build the case, then accuse.</p>
+      <div class="m-choices"><button class="btn btn-primary" data-close>Keep investigating</button></div>`);
+    $('#modal [data-close]').onclick=()=>{closeModal();renderSuspects();};
+    renderHUD(); save(); return;
+  }
+  // wrong person entirely
+  bumpTrust('all',-18); S.trust[id]=clamp(S.trust[id]-30); adjust({social:-18,security:-8});
+  S.escalations++;
+  const s=SUSPECTS.find(x=>x.id===id);
+  logEntry('FALSE ACCUSATION against '+s.name+'. Witnesses stopped cooperating.','bad');
+  if(S.accusationsMade>=3){ return ending('loss-reputation',id); }
+  modal(`<p class="m-tag">FALSE ACCUSATION</p><h3>${s.name} was innocent.</h3>
+    <p>${s.innocentExplain||s.statement}</p>
+    <p>Trust across campus dropped. ${s.name} won't cooperate now, you lost investigation
+    time, and the attacker used the opening to escalate.</p>
+    <p class="sus-note">Suspicious ≠ guilty. Three unsupported accusations and IT revokes your access.</p>
+    <div class="m-choices"><button class="btn btn-primary" data-close>Back to the case</button></div>`);
+  $('#modal [data-close]').onclick=()=>{closeModal();renderSuspects();};
+  renderHUD(); save();
+}
+
+/* ---------- DAILY DECISIONS ---------- */
+const ACTIVITIES=[
+  {id:'class',name:'Attend class',cost:2,desc:'Keep up with coursework so your GPA survives the week.',fx:{academics:8,energy:-4},kind:''},
+  {id:'study',name:'Study for the exam',cost:2,desc:'Thursday\'s Calculus exam is worth more than any all-nighter.',fx:{academics:5,cyber:1,energy:-6},kind:''},
+  {id:'invest',name:'Investigate a lead',cost:1,desc:'Head to the campus map and search a location for clues.',fx:{},kind:'goto:map'},
+  {id:'interview',name:'Interview a suspect',cost:1,desc:'Pull statements and compare them against the evidence.',fx:{},kind:'goto:suspects'},
+  {id:'board',name:'Work the board',cost:0,desc:'Connect clues to suspects and mark what\'s confirmed. Free — costs no hours.',fx:{},kind:'goto:board'},
+  {id:'club',name:'Attend a club event',cost:2,desc:'Social progress and campus goodwill — people talk to people they like.',fx:{social:9,energy:-3},kind:'social'},
+  {id:'rest',name:'Rest (short)',cost:2,desc:'Recover some energy without losing the whole day.',fx:{energy:16},kind:''}
+];
+function renderDecisions(){
+  $('#decisionsTitle').textContent=`Day ${S.day} · ${DAYNAMES[S.day]} — ${S.hours}h left`;
+  const g=$('#activityGrid'); g.innerHTML='';
+  ACTIVITIES.forEach(a=>{
+    const disabled=a.cost>S.hours;
+    const el=document.createElement('div');
+    el.className='act-card'+(disabled?' disabled':'');
+    el.innerHTML=`<h3>${a.name}<span class="cost mono">${a.cost?a.cost+'h':'free'}</span></h3>
+      <p>${a.desc}</p>
+      ${Object.keys(a.fx).length?`<div class="fx">${statDelta(a.fx)}</div>`:''}
+      <button class="btn" ${disabled?'disabled':''} data-act="${a.id}">${a.kind.startsWith('goto')?'Go →':'Do it'}</button>`;
+    g.appendChild(el);
+  });
+  // sleep / end day
+  const sleep=document.createElement('div');
+  sleep.className='act-card endday';
+  sleep.innerHTML=`<h3>Sleep — end the day<span class="cost mono">8h</span></h3>
+    <p>Recover energy and advance to Day ${S.day+1}. The attacker may move overnight if incidents went ignored.</p>
+    <div class="fx">NRG +${Math.min(40,100-S.stats.energy)} · DAY +1</div>
+    <button class="btn btn-primary" data-endday>Sleep &amp; advance</button>`;
+  g.appendChild(sleep);
+  // final accusation (available day 5+ or always via suspects)
+  const accuse=document.createElement('div');
+  accuse.className='act-card accuse';
+  accuse.innerHTML=`<h3>Make your accusation<span class="cost mono">endgame</span></h3>
+    <p>Ready to name the attacker? Head to Suspects and accuse — or wait for the Day 7 showdown.</p>
+    <button class="btn btn-danger" data-goto="suspects">Go to Suspects →</button>`;
+  g.appendChild(accuse);
+
+  g.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>doActivity(b.dataset.act));
+  g.querySelector('[data-endday]').onclick=endDay;
+  g.querySelectorAll('[data-goto]').forEach(b=>b.onclick=()=>show(b.dataset.goto));
+  renderLog();
+}
+function doActivity(id){
+  const a=ACTIVITIES.find(x=>x.id===id);
+  if(a.cost>S.hours){ toast('Not enough hours.','warn','TIME'); return; }
+  if(a.kind.startsWith('goto')){ show(a.kind.split(':')[1]); return; }
+  S.hours-=a.cost; adjust(a.fx);
+  logEntry(a.name+'.', a.fx.energy&&a.fx.energy>0?'good':'');
+  if(a.id==='study')toast('Exam prep up. Energy down.','','STUDY');
+  if(a.id==='club'){bumpTrust('all',2);toast('Campus goodwill up.','good','SOCIAL');}
+  renderDecisions(); renderHUD(); save();
+}
+function endDay(){
+  // overnight: attacker moves if security is slipping or incidents ignored
+  const energyGain=Math.min(40,100-S.stats.energy);
+  adjust({energy:energyGain});
+  if(S.day>=7){ return finalDay(); }
+  // escalate if player under-invested in security that day
+  if(S.stats.security<70 || S.foundClues.length < S.day+1){
+    escalate();
+  } else {
+    logEntry('Quiet night. You stayed ahead of the attacker.','good');
+  }
+  S.day++; S.hours=HOURS_PER_DAY;
+  logEntry('— Day '+S.day+' ('+DAYNAMES[S.day]+') begins —','');
+  toast('Day '+S.day+' · '+DAYNAMES[S.day]+'. Hours reset to '+HOURS_PER_DAY+'.','','NEW DAY');
+  // exam event on Thursday
+  if(S.day===4){ examEvent(); }
+  renderDecisions(); renderHUD(); renderCalendar(); save();
+}
+function examEvent(){
+  const ready=S.stats.academics, energy=S.stats.energy;
+  const pass = (ready*0.6 + energy*0.4) > 55;
+  if(pass){ adjust({academics:6}); logEntry('Passed the Calculus exam. Energy and prep paid off.','good');
+    toast('You passed the Calculus exam.','good','THURSDAY'); }
+  else { adjust({academics:-12}); logEntry('Struggled through the exam — too little study, too little sleep.','bad');
+    toast('The exam did not go well.','bad','THURSDAY'); }
+}
+function finalDay(){
+  modal(`<p class="m-tag">SUNDAY · DAY 7 · 23:12</p><h3>The final attack has begun.</h3>
+    <p>The student portal is going down in real time. This is your window. Name the attacker
+    with a case you can defend — or report the vulnerabilities and contain the damage without
+    a conviction.</p>
+    <div class="m-choices">
+      <button class="btn btn-danger" data-accuse>Name the attacker</button>
+      <button class="btn" data-contain>Contain the attack instead</button></div>`);
+  $('#modal [data-accuse]').onclick=()=>{closeModal();show('suspects');toast('Choose who to accuse.','warn','FINAL');};
+  $('#modal [data-contain]').onclick=()=>containEnding();
+}
+function containEnding(){
+  if(S.stats.security>55 || S.reported){ ending('balanced-contained'); }
+  else { ending('loss-escaped'); }
+}
+
+/* ---------- ENDINGS ---------- */
+function ending(type,accusedId){
+  S.ended=true;
+  const st=S.stats;
+  const attacker=SUSPECTS.find(s=>s.id===S.attacker);
+  const E={
+    'win-clean':{cls:'ending-win',tag:'CASE CLOSED',title:'You named the attacker — and proved it.',
+      body:`It was <b>${attacker.name}</b>, the ${attacker.role.toLowerCase()}. Your linked evidence, the confirmed high-reliability clues, and the interview that let them respond all held up. The portal attack was stopped, student accounts secured, and you did it without falsely accusing an innocent person.`},
+    'balanced-contained':{cls:'ending-win',tag:'CAMPUS PROTECTED',title:'You didn\'t name them — but you saved the portal.',
+      body:`You never got a defensible case against a single person, so you didn\'t accuse anyone. Instead you reported every vulnerability, warned students before the phishing wave, and hardened the portal. The attack fizzled. The attacker (<b>${attacker.name}</b>) escaped — but no innocent student paid for it, and the campus is safe. A real, honorable outcome.`},
+    'loss-escaped':{cls:'ending-loss',tag:'ATTACKER ESCAPED',title:'The portal fell. The trail went cold.',
+      body:`You didn\'t investigate enough or protect enough. The final attack succeeded, records were exposed, and <b>${attacker.name}</b> was never caught. Sometimes the semester wins.`},
+    'loss-reputation':{cls:'ending-loss',tag:'ACCESS REVOKED',title:'Three false accusations. You\'re out.',
+      body:`After too many unsupported accusations, IT revoked your investigation access and the student body stopped trusting you. The real attacker, <b>${attacker.name}</b>, walked free. The lesson lands hard: suspicion is not evidence.`}
+  }[type];
+  modal(`<p class="m-tag ${E.cls==='ending-win'?'cyan':''}">${E.tag}</p>
+    <h3>${E.title}</h3>
+    <p>${E.body}</p>
+    <div class="ending-stats">
+      <div><span class="mono">ACADEMICS</span><b>${st.academics}</b></div>
+      <div><span class="mono">CYBERSEC</span><b>${st.cyber}</b></div>
+      <div><span class="mono">SOCIAL</span><b>${st.social}</b></div>
+      <div><span class="mono">SECURITY</span><b>${st.security}</b></div>
+      <div><span class="mono">DAYS</span><b>${S.day}</b></div>
+    </div>
+    <p class="dim small" style="margin-top:1rem">${st.academics>55?'You kept your degree alive.':'Your grades suffered for the investigation.'} A different playthrough randomizes the attacker — try again and the guilty party changes.</p>
+    <div class="m-choices"><button class="btn btn-primary" data-restart>▸ New investigation</button></div>`,
+    {cls:E.cls,dismissable:false});
+  $('#modal [data-restart]').onclick=()=>{closeModal();localStorage.removeItem(SAVE_KEY);startGame();};
+}
+
+/* ---------- PROGRESS ---------- */
+function renderProgress(){
+  if(S.view!=='progress')return;
+  const g=$('#progressGrid'); if(!g)return; g.innerHTML='';
+  const tiles=[
+    ['SEMESTER DAY',S.day+' / 7',100*S.day/7],
+    ['ACADEMICS',S.stats.academics,S.stats.academics],
+    ['CYBERSECURITY',S.stats.cyber,S.stats.cyber],
+    ['ENERGY',S.stats.energy,S.stats.energy],
+    ['SOCIAL TRUST',S.stats.social,S.stats.social],
+    ['CAMPUS SECURITY',S.stats.security,S.stats.security],
+    ['INVESTIGATION',(S.confidence||0)+'%',S.confidence||0]
+  ];
+  tiles.forEach(([label,val,pct])=>{
+    const el=document.createElement('div'); el.className='stat-tile';
+    const cls=pct<30?'low':pct<55?'mid':'';
+    el.innerHTML=`<div class="st-label">${label}</div><div class="st-val">${val}</div>
+      <div class="tbar"><i class="${cls}" style="width:${clamp(pct)}%"></i></div>`;
+    g.appendChild(el);
+  });
+  const fl=$('#fullLog'); fl.innerHTML=S.log.slice(0,40).map(e=>
+    `<li class="${e.kind}"><span class="mono">D${e.day} · </span>${e.text}</li>`).join('')||'<li class="dim">No activity yet.</li>';
+}
+function renderLog(){
+  const fe=$('#logFeed');
+  if(fe) fe.innerHTML=S.log.filter(e=>e.day===S.day).slice(0,15).map(e=>
+    `<li class="${e.kind}">${e.text}</li>`).join('')||'<li class="dim">Nothing logged today yet.</li>';
+  renderProgress();
+}
+
+/* ---------- MODAL PLUMBING ---------- */
+function modal(html,opts={}){
+  const m=$('#modal'), veil=$('#modalVeil');
+  m.className='modal '+(opts.cls||'');
+  m.innerHTML=html; veil.hidden=false;
+  veil.dataset.dismissable=opts.dismissable===false?'0':'1';
+}
+function closeModal(){ $('#modalVeil').hidden=true; }
+$('#modalVeil').addEventListener('click',e=>{
+  if(e.target.id==='modalVeil' && e.currentTarget.dataset.dismissable!=='0') closeModal();
+});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$('#modalVeil').dataset.dismissable!=='0')closeModal(); });
+
+/* ---------- BOOT ---------- */
+function boot(){
+  renderLandingSuspects();
+  initBackground();
+  initScroll();
+  initDemoObserver();
+  const saved=load();
+  if(saved && saved.started && !saved.ended){
+    S=Object.assign(freshState(),saved);
+    $('#resumeBtn').hidden=false; $('#resumeDay').textContent=S.day;
+    $('#topStartBtn').textContent='▸ Resume';
+    gate(true);
+  } else {
+    S=freshState();
+  }
+  renderHUD();
+  // nav
+  $$('.mainnav a').forEach(a=>a.addEventListener('click',e=>{
+    const v=a.dataset.view; if(!v)return;
+    if(a.classList.contains('locked')){e.preventDefault();toast('Start the investigation first.','warn','LOCKED');return;}
+    e.preventDefault(); show(v);
+  }));
+  $('#navburger').onclick=()=>$('#mainnav').classList.toggle('open');
+  const startOrResume=()=>{ (S.started&&!S.ended?resumeGame:startGame)(); };
+  $('#startBtn').onclick=startGame;
+  $('#startBtn2').onclick=startGame;
+  $('#resumeBtn').onclick=resumeGame;
+  $('#topStartBtn').onclick=startOrResume;
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);
+else boot();
+})();
+
+</script>
+</body>
+</html>
